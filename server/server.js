@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Room from "./models/Room.js";
 import User from "./models/User.js";
+import Task from "./models/Task.js";
 
 const app = express();
 app.use(cors());
@@ -31,7 +32,7 @@ app.post("/api/rooms", protect, async (req, res) => {
     members: [req.userId],
   });
   res.status(201).json(newRoom);
-})
+});
 
 app.post("/api/rooms/join", protect, async (req, res) => {
   const joinCode = req.body.joinCode?.toUpperCase();
@@ -51,7 +52,37 @@ app.post("/api/rooms/join", protect, async (req, res) => {
   }
 
   res.json(room);
-})
+});
+
+app.post("/api/rooms/:roomId/tasks", protect, async (req, res) => {
+  const room = await Room.findOne({ _id: req.params.roomId, members: req.userId});
+
+  if (!room) {
+    return res.status(403).json({ message: "You are not a member of this room" });
+  }
+
+  if (!req.body.title) {
+    return res.status(400).json({ message: "Title is required" });
+  }
+
+  const task = await Task.create({
+    room: room._id,
+    title: req.body.title,
+    createdBy: req.userId,
+  });
+
+  res.status(201).json(task);
+});
+
+app.get("/api/rooms/:roomId/tasks", protect, async (req, res) => {
+  const room = await Room.findOne({ _id: req.params.roomId, members: req.userId });
+  if (!room) {
+    return res.status(403).json({ message: "You are not a member of this room" });
+  }
+
+  const tasks = await Task.find({ room: room._id }).sort({ createdAt: 1 });
+  res.json(tasks);
+});
 
 app.post("/api/auth/register", async (req, res) => {
   const { name, email, password } = req.body;
