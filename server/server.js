@@ -1,11 +1,13 @@
-import "dotenv/config";
-import { protect } from "./middleware/auth.js";
+import http from "http";
+import { Server } from "socket.io";
 import mongoose from "mongoose";
 import express from "express";
+import "dotenv/config";
 import cors from "cors";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { protect } from "./middleware/auth.js";
 import Room from "./models/Room.js";
 import User from "./models/User.js";
 import Task from "./models/Task.js";
@@ -13,6 +15,16 @@ import Task from "./models/Task.js";
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: "http://localhost:5173" }
+});
+
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
+  socket.on("disconnect", () => console.log("A user left:", socket.id));
+})
 
 app.get("/home", (req, res) => {
   res.send("Hello from my first server");
