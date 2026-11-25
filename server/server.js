@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { protect } from "./middleware/auth.js";
 import mongoose from "mongoose";
 import express from "express";
 import cors from "cors";
@@ -21,7 +22,7 @@ app.get("/api/rooms", async (req, res) => {
   res.json(rooms);
 });
 
-app.post("/api/rooms", async (req, res) => {
+app.post("/api/rooms", protect, async (req, res) => {
   const joinCode = crypto.randomBytes(3).toString("hex").toUpperCase();
   const newRoom = await Room.create({ name: req.body.name, joinCode });
   res.status(201).json(newRoom);
