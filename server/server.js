@@ -2,6 +2,7 @@ import "dotenv/config";
 import mongoose from "mongoose";
 import express from "express";
 import cors from "cors";
+import crypto from "crypto";
 import Room from "./models/Room.js";
 
 const app = express();
@@ -18,7 +19,8 @@ app.get("/api/rooms", async (req, res) => {
 });
 
 app.post("/api/rooms", async (req, res) => {
-  const newRoom = await Room.create({ name: req.body.name });
+  const joinCode = crypto.randomBytes(3).toString("hex").toUpperCase();
+  const newRoom = await Room.create({ name: req.body.name, joinCode });
   res.status(201).json(newRoom);
 })
 
