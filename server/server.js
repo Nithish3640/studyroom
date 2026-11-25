@@ -84,6 +84,29 @@ app.get("/api/rooms/:roomId/tasks", protect, async (req, res) => {
   res.json(tasks);
 });
 
+app.patch("/api/tasks/:taskId", protect, async (req, res) => {
+  const { status } = req.body;
+
+  if (!["todo", "doing", "done"].includes(status)) {
+    return res.status(400).json({ message: "Invalid status" });
+  }
+
+  const task = await Task.findById(req.params.taskId);
+  if (!task) {
+    return res.status(404).json({ message: "Task not found" });
+  }
+
+  const room = await Room.findOne({ _id: task.room, members: req.userId });
+  if (!room) {
+    return res.status(403).json({ message: "You are not a member of this room" });
+  }
+
+  task.status = status;
+  await task.save();
+
+  res.json(task);
+});
+
 app.post("/api/auth/register", async (req, res) => {
   const { name, email, password } = req.body;
 

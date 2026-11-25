@@ -120,7 +120,28 @@ export default function App() {
               alert(task.message || "Could not add task");
             }
           });
-      }
+    }
+
+    function changeStatus(task, newStatus) {
+        const token = localStorage.getItem("token");
+      
+        fetch(`http://localhost:5000/api/tasks/${task._id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: newStatus }),
+        })
+          .then((res) => res.json())
+          .then((updated) => {
+            if (updated._id) {
+              setTasks(tasks.map((t) => (t._id === updated._id ? updated : t)));
+            } else {
+              alert(updated.message || "Could not update task");
+            }
+          });
+    }
 
     return (
         <div>
@@ -144,7 +165,12 @@ export default function App() {
                     />
                     <button onClick={addTask}>Add Task</button>
                     {tasks.map((task) => (
-                        <p key={task._id}>{task.title} ({task.status})</p>
+                        <p key={task._id}>
+                            {task.title} ({task.status}){" "}
+                            <button onClick={() => changeStatus(task, "todo")}>Todo</button>
+                            <button onClick={() => changeStatus(task, "doing")}>Doing</button>
+                            <button onClick={() => changeStatus(task, "done")}>Done</button>
+                        </p>
                     ))}
                 </div>
             )}
