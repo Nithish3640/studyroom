@@ -6,7 +6,8 @@ export default function App() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [joinCode, setJoinCode] = useState("");
-
+    const [selectedRoom, setSelectedRoom] = useState(null);
+    const [tasks, setTasks] = useState([]);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -85,6 +86,19 @@ export default function App() {
             });
     }
 
+    function openRoom(room) {
+        setSelectedRoom(room);
+        const token = localStorage.getItem("token");
+
+        fetch(`http://localhost:5000/api/rooms/${room._id}/tasks`, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                if (Array.isArray(data)) setTasks(data);
+            });
+    }
+
     return (
         <div>
             <h2>Login</h2>
@@ -93,7 +107,17 @@ export default function App() {
             <button onClick={login}>Login</button>
             <h1>Study Rooms</h1>
             {rooms.map((room) => 
-                <p key={room._id}>{room.name} (Code: {room.joinCode})</p>            
+                <p key={room._id} onClick={() => openRoom(room)} style={{ cursor: "pointer"}}>
+                    {room.name} (Code: {room.joinCode})
+                </p>            
+            )}
+            {selectedRoom && (
+                <div>
+                    <h3>Tasks in {selectedRoom.name}</h3>
+                    {tasks.map((task) => {
+                        return <p key={task._id}>{task.title} ({task.status})</p>
+                    })}
+                </div>
             )}
             <input value={name} onChange={(e) => setName(e.target.value)} />
             <button onClick={addRoom}>Add Room</button>
