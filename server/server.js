@@ -33,6 +33,26 @@ app.post("/api/rooms", protect, async (req, res) => {
   res.status(201).json(newRoom);
 })
 
+app.post("/api/rooms/join", protect, async (req, res) => {
+  const joinCode = req.body.joinCode?.toUpperCase();
+
+  if (!joinCode) {
+    return res.status(400).json({ message: "Join code is required" });
+  }
+
+  const room = await Room.findOneAndUpdate(
+    { joinCode },
+    { $addToSet: { members: req.userId } },
+    { new: true }
+  );
+
+  if (!room) {
+    return res.status(404).json({ message: "No room with that code"});
+  }
+
+  res.json(room);
+})
+
 app.post("/api/auth/register", async (req, res) => {
   const { name, email, password } = req.body;
 

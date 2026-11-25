@@ -5,6 +5,7 @@ export default function App() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [joinCode, setJoinCode] = useState("");
 
 
     useEffect(() => {
@@ -60,6 +61,30 @@ export default function App() {
             });
     }
 
+    function joinRoom() {
+        const token = localStorage.getItem("token");
+
+        fetch("http://localhost:5000/api/rooms/join", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ joinCode }),
+        })
+            .then((res) => res.json())
+            .then((room) => {
+                if (room._id) {
+                    if (!rooms.some((r) => r._id === room._id)) {
+                        setRooms([...rooms, room]);
+                    }
+                    setJoinCode("");
+                } else {
+                    alert(room.message || "Could not join");
+                }
+            });
+    }
+
     return (
         <div>
             <h2>Login</h2>
@@ -72,6 +97,9 @@ export default function App() {
             )}
             <input value={name} onChange={(e) => setName(e.target.value)} />
             <button onClick={addRoom}>Add Room</button>
+            <h3>Join a room</h3>
+            <input placeholder="Join code" value={joinCode} onChange={(e) => setJoinCode(e.target.value)} />
+            <button onClick={joinRoom}>Join</button>
         </div>
     )
 }
