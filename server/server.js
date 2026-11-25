@@ -24,7 +24,12 @@ app.get("/api/rooms", async (req, res) => {
 
 app.post("/api/rooms", protect, async (req, res) => {
   const joinCode = crypto.randomBytes(3).toString("hex").toUpperCase();
-  const newRoom = await Room.create({ name: req.body.name, joinCode });
+  const newRoom = await Room.create({ 
+    name: req.body.name, 
+    joinCode,
+    owner: req.userId,
+    members: [req.userId],
+  });
   res.status(201).json(newRoom);
 })
 
