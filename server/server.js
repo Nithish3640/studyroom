@@ -1,5 +1,8 @@
+import "dotenv/config";
+import mongoose from "mongoose";
 import express from "express";
 import cors from "cors";
+import Room from "./models/Room.js";
 
 const app = express();
 app.use(cors());
@@ -9,21 +12,24 @@ app.get("/home", (req, res) => {
   res.send("Hello from my first server");
 });
 
-let rooms = [
-  { id: 1, name: "DSA Study Group"},
-  { id: 2, name: "React Practice" },
-];
-
-app.get("/api/rooms", (req, res) => {
+app.get("/api/rooms", async (req, res) => {
+  const rooms = await Room.find();
   res.json(rooms);
 });
 
-app.post("/api/rooms", (req, res) => {
-  const newRoom = { id: Date.now(), name: req.body.name};
-  rooms.push(newRoom);
+app.post("/api/rooms", async (req, res) => {
+  const newRoom = await Room.create({ name: req.body.name });
   res.status(201).json(newRoom);
 })
 
-app.listen(5000, () => {
-  console.log("Server is running on port 5000");
-});
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("MongoDB connected");
+    app.listen(5000, () => {
+      console.log("Server is running on port 5000");  
+    });
+  })
+  .catch((err) => {
+    console.log("MongoDB connection failed:", err.message);
+  });

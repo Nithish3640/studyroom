@@ -29,7 +29,7 @@ export default function App() {
         <div>
             <h1>Study Rooms</h1>
             {rooms.map((room) => 
-                <p key={room.id}>{room.name}</p>            
+                <p key={room._id}>{room.name}</p>            
             )}
             <input value={name} onChange={(e) => setName(e.target.value)} />
             <button onClick={addRoom}>Add Room</button>
