@@ -8,6 +8,7 @@ export default function App() {
     const [joinCode, setJoinCode] = useState("");
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [tasks, setTasks] = useState([]);
+    const [taskTitle, setTaskTitle] = useState("");
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -99,6 +100,28 @@ export default function App() {
             });
     }
 
+    function addTask() {
+        const token = localStorage.getItem("token");
+      
+        fetch(`http://localhost:5000/api/rooms/${selectedRoom._id}/tasks`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ title: taskTitle }),
+        })
+          .then((res) => res.json())
+          .then((task) => {
+            if (task._id) {
+              setTasks([...tasks, task]);
+              setTaskTitle("");
+            } else {
+              alert(task.message || "Could not add task");
+            }
+          });
+      }
+
     return (
         <div>
             <h2>Login</h2>
@@ -114,9 +137,15 @@ export default function App() {
             {selectedRoom && (
                 <div>
                     <h3>Tasks in {selectedRoom.name}</h3>
-                    {tasks.map((task) => {
-                        return <p key={task._id}>{task.title} ({task.status})</p>
-                    })}
+                    <input
+                        placeholder="New task"
+                        value={taskTitle}
+                        onChange={(e) => setTaskTitle(e.target.value)}
+                    />
+                    <button onClick={addTask}>Add Task</button>
+                    {tasks.map((task) => (
+                        <p key={task._id}>{task.title} ({task.status})</p>
+                    ))}
                 </div>
             )}
             <input value={name} onChange={(e) => setName(e.target.value)} />
