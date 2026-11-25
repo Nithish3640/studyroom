@@ -17,8 +17,8 @@ app.get("/home", (req, res) => {
   res.send("Hello from my first server");
 });
 
-app.get("/api/rooms", async (req, res) => {
-  const rooms = await Room.find();
+app.get("/api/rooms", protect, async (req, res) => {
+  const rooms = await Room.find({ members: req.userId });
   res.json(rooms);
 });
 

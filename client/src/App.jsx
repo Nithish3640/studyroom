@@ -8,9 +8,17 @@ export default function App() {
 
 
     useEffect(() => {
-        fetch("http://localhost:5000/api/rooms")
+        const token = localStorage.getItem("token");
+
+        fetch("http://localhost:5000/api/rooms",
+            {
+                headers: { Authorization: `Bearer ${token}`},
+            }
+        )
         .then(res => res.json())
-        .then(data => setRooms(data));
+        .then(data => {
+            if (Array.isArray(data)) setRooms(data);
+        });
     }, []);
 
     function addRoom() {
