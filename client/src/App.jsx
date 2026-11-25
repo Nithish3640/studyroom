@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 export default function App() {
     const [rooms, setRooms] = useState([]);
     const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
 
     useEffect(() => {
@@ -17,16 +19,40 @@ export default function App() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({name}),
         })
-        .then((res) => res.json())
-        .then((newRoom) => {
-            setRooms([...rooms, newRoom]);
-            setName("");
-            console.log(rooms);
-        });
+            .then((res) => res.json())
+            .then((newRoom) => {
+                if (newRoom._id) {
+                    setRooms([...rooms, newRoom]);
+                    setName("");
+                } else {
+                    alert(newRoom.message || "Could not add room");
+                }
+            });
+    }
+
+    function login() {
+        fetch("http://localhost:5000/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.token) {
+                    localStorage.setItem("token", data.token);
+                    alert("Logged in!");
+                } else{
+                    alert(data.message || "Login failed");
+                }
+            });
     }
 
     return (
         <div>
+            <h2>Login</h2>
+            <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <button onClick={login}>Login</button>
             <h1>Study Rooms</h1>
             {rooms.map((room) => 
                 <p key={room._id}>{room.name} (Code: {room.joinCode})</p>            
