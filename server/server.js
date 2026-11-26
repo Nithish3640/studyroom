@@ -11,6 +11,7 @@ import { protect } from "./middleware/auth.js";
 import Room from "./models/Room.js";
 import User from "./models/User.js";
 import Task from "./models/Task.js";
+import Note from "./models/Note.js";
 
 const app = express();
 app.use(cors());
@@ -125,6 +126,32 @@ app.patch("/api/tasks/:taskId", protect, async (req, res) => {
   io.to(task.room.toString()).emit("task:updated", task);
 
   res.json(task);
+});
+
+app.get("/api/rooms/:roomId/note", protect, async (req, res) => {
+  const room = await Room.findOne({ _id: req.params.roomId, members: req.userId });
+  if (!room) {
+    return res.status(403).json({ message: "You are not a member of this room" });
+  }
+
+  const note = await Note.findOne({ room: room._id });
+  res.json(note || { content: "" });
+});
+
+app.put("/api/rooms/:roomId/note", protect, async (req, res) => {
+  const room = await Room.findOne({ _id: req.params.roomId, members: req.userId });
+  if (!room) {
+    return res.status(403).json({ message: "You are not a member of this room" });
+  }
+
+  const note = await Note.findOneAndUpdate(
+    { room: room._id },
+    { content: req.body.content ?? "", updatedBy: req.userId },
+    { new: true, upsert: true }
+  );
+
+  io.to(req.params.roomId).emit("note:updated", note);
+  res.json(note);
 });
 
 app.post("/api/auth/register", async (req, res) => {
