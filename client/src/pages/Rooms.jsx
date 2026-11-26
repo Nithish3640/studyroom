@@ -12,6 +12,8 @@ export default function Rooms() {
     const [tasks, setTasks] = useState([]);
     const [taskTitle, setTaskTitle] = useState("");
     const [noteContent, setNoteContent] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [summary, setSummary] = useState("");
 
     useEffect(() => {
         if (!localStorage.getItem("token")) navigate("/login");
@@ -193,6 +195,27 @@ export default function Rooms() {
           });
     }
 
+    function summarize() {
+        console.log("Summarize clicked")
+        const token = localStorage.getItem("token");
+        setLoading(true);
+        setSummary("");
+
+        fetch(`http://localhost:5000/api/rooms/${selectedRoom._id}/summarize`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.summary) {
+                    setSummary(data.summary);
+                } else {
+                    alert(data.message || "Could not summarize")
+                }
+            })
+            .finally(() => setLoading(false));
+    }
+
     return (
         <div>
             <button onClick={logout}>Logout</button>
@@ -203,6 +226,11 @@ export default function Rooms() {
                     {room.name} (Code: {room.joinCode})
                 </p>            
             )}
+            <input value={name} onChange={(e) => setName(e.target.value)} />
+            <button onClick={addRoom}>Add Room</button>
+            <h3>Join a room</h3>
+            <input placeholder="Join code" value={joinCode} onChange={(e) => setJoinCode(e.target.value)} />
+            <button onClick={joinRoom}>Join</button>
             {selectedRoom && (
                 <div>
                     <h3>Tasks in {selectedRoom.name}</h3>
@@ -229,13 +257,17 @@ export default function Rooms() {
                     />
                     <br />
                     <button onClick={saveNote}>Save Note</button>
+                    <button onClick={summarize} disabled={loading}>
+                        {loading ? "Summarizing..." : "Summarize with AI" }
+                    </button>
+                    {summary && (
+                        <div>
+                            <h4>AI Summary</h4>
+                            <p style={{ whiteSpace: "pre-wrap"}}>{summary}</p>
+                        </div>
+                    )}
                 </div>
             )}
-            <input value={name} onChange={(e) => setName(e.target.value)} />
-            <button onClick={addRoom}>Add Room</button>
-            <h3>Join a room</h3>
-            <input placeholder="Join code" value={joinCode} onChange={(e) => setJoinCode(e.target.value)} />
-            <button onClick={joinRoom}>Join</button>
         </div>
     )
 }
