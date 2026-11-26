@@ -25,7 +25,7 @@ export default function App() {
         });
     }, []);
 
-    useEffecr(() => {
+    useEffect(() => {
         function onTaskCreated(task) {
             if (task.room !== selectedRoom) return;
             setTasks((prev) => 
@@ -36,6 +36,15 @@ export default function App() {
         return () => socket/off("task:created", onTaskCreated);
         }
     }, [selectedRoom]);
+
+    useEffect(() => {
+        function onTaskUpdated(updated) {
+            setTasks((prev) => prev.map((t) => (t._id === updated._id ? updated : t)));
+        }
+
+        socket.on("task:updated", onTaskUpdated);
+        return () => socket.off("task.updated", onTaskUpdated);
+    }, []);
 
     function addRoom() {
         const token = localStorage.getItem("token");

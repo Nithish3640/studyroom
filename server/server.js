@@ -122,6 +122,8 @@ app.patch("/api/tasks/:taskId", protect, async (req, res) => {
   task.status = status;
   await task.save();
 
+  io.to(task.room.toString()).emit("task:updated", task);
+
   res.json(task);
 });
 
