@@ -1,15 +1,20 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { socket } from "../socket.js";
 
 export default function Rooms() {
+    const navigate = useNavigate();
+
     const [rooms, setRooms] = useState([]);
     const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
     const [joinCode, setJoinCode] = useState("");
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [tasks, setTasks] = useState([]);
     const [taskTitle, setTaskTitle] = useState("");
+
+    useEffect(() => {
+        if (!localStorage.getItem("token")) navigate("/login");
+    }, []); 
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -46,6 +51,11 @@ export default function Rooms() {
         return () => socket.off("task.updated", onTaskUpdated);
     }, []);
 
+    function logout() {
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
+
     function addRoom() {
         const token = localStorage.getItem("token");
 
@@ -64,23 +74,6 @@ export default function Rooms() {
                     setName("");
                 } else {
                     alert(newRoom.message || "Could not add room");
-                }
-            });
-    }
-
-    function login() {
-        fetch("http://localhost:5000/api/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                if (data.token) {
-                    localStorage.setItem("token", data.token);
-                    alert("Logged in!");
-                } else{
-                    alert(data.message || "Login failed");
                 }
             });
     }
@@ -168,10 +161,8 @@ export default function Rooms() {
 
     return (
         <div>
-            <h2>Login</h2>
-            <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <input placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            <button onClick={login}>Login</button>
+            <button onClick={logout}>Logout</button>
+
             <h1>Study Rooms</h1>
             {rooms.map((room) => 
                 <p key={room._id} onClick={() => openRoom(room)} style={{ cursor: "pointer"}}>
