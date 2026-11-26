@@ -177,6 +177,51 @@ app.post("/api/rooms/:roomId/summarize", protect, async (req, res) => {
   }
 });
 
+app.post("/api/rooms/:roomId/generate-tasks", protect, async (req, res) => {
+  const room = await Room.findOne({ _id: req.params.roomId, members: req.userId });
+  if (!room) {
+    return res.status(403).json({ message: "You are not a member of this room" });
+  }
+
+  const note = await Note.findOne({ room : room._id });
+  if (!note || !note.content.trim()) {
+    return res.status(400).json({ message: "Write some notes first" });
+  }
+
+  try{
+    const reply = await askGemini(
+      `Read these study notes and write 3 to 5 short study tasks. ` +
+      `Reply with one task per line. No numbers, no bullets, no extra text.\n\n${note.content}`
+    );
+  
+    const titles = reply
+    .split("\n")
+    .map((line) => line.replace(/^[-*\d.\s]+/, "").trim())
+    .filter(Boolean)
+    .slice(0, 5);
+
+    if (titles.length === 0) {
+      return res.status(502).json({ message: "AI returned no tasks, try again" });
+    }
+
+    const tasks = await Task.insertMany(
+      titles.map((title) => ({
+        room: room._id,
+        title,
+        createdBy: req.userId,
+      }))
+    );
+  
+    tasks.forEach((task) => {
+      io.to(req.params.roomId).emit("task:created", task);
+    });
+  
+    res.status(201).json(tasks);
+  } catch (err) {
+      res.status(503).json({ message: "AI is busy, try again in a moment" });
+  }
+});
+
 app.post("/api/auth/register", async (req, res) => {
   const { name, email, password } = req.body;
 
