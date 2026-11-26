@@ -11,6 +11,7 @@ export default function Rooms() {
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [tasks, setTasks] = useState([]);
     const [taskTitle, setTaskTitle] = useState("");
+    const [noteContent, setNoteContent] = useState("");
 
     useEffect(() => {
         if (!localStorage.getItem("token")) navigate("/login");
@@ -50,6 +51,16 @@ export default function Rooms() {
         socket.on("task:updated", onTaskUpdated);
         return () => socket.off("task.updated", onTaskUpdated);
     }, []);
+
+    useEffect(() => {
+        function onNoteUpdated(note) {
+          if (note.room !== selectedRoom?._id) return;
+          setNoteContent(note.content);
+        }
+      
+        socket.on("note:updated", onNoteUpdated);
+        return () => socket.off("note:updated", onNoteUpdated);
+    }, [selectedRoom]);
 
     function logout() {
         localStorage.removeItem("token");
@@ -114,6 +125,12 @@ export default function Rooms() {
             .then((data) => {
                 if (Array.isArray(data)) setTasks(data);
             });
+
+        fetch(`http://localhost:5000/api/rooms/${room._id}/note`, {
+            headers: { Authorization: `Bearer ${token}` },
+            })
+            .then((res) => res.json())
+            .then((data) => setNoteContent(data.content || ""));
     }
 
     function addTask() {
@@ -159,6 +176,23 @@ export default function Rooms() {
           });
     }
 
+    function saveNote() {
+        const token = localStorage.getItem("token");
+      
+        fetch(`http://localhost:5000/api/rooms/${selectedRoom._id}/note`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ content: noteContent }),
+        })
+          .then((res) => res.json())
+          .then((note) => {
+            if (!note.content && note.message) alert(note.message);
+          });
+    }
+
     return (
         <div>
             <button onClick={logout}>Logout</button>
@@ -186,6 +220,15 @@ export default function Rooms() {
                             <button onClick={() => changeStatus(task, "done")}>Done</button>
                         </p>
                     ))}
+                    <h3>Shared Notes</h3>
+                    <textarea
+                    rows={8}
+                    cols={50}
+                    value={noteContent}
+                    onChange={(e) => setNoteContent(e.target.value)}
+                    />
+                    <br />
+                    <button onClick={saveNote}>Save Note</button>
                 </div>
             )}
             <input value={name} onChange={(e) => setName(e.target.value)} />
