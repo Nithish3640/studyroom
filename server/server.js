@@ -12,6 +12,7 @@ import Room from "./models/Room.js";
 import User from "./models/User.js";
 import Task from "./models/Task.js";
 import Note from "./models/Note.js";
+import { askGemini } from "./services/gemini.js";
 
 const app = express();
 app.use(cors());
@@ -152,6 +153,28 @@ app.put("/api/rooms/:roomId/note", protect, async (req, res) => {
 
   io.to(req.params.roomId).emit("note:updated", note);
   res.json(note);
+});
+
+app.post("/api/rooms/:roomId/summarize", protect, async (req, res) => {
+  const room = await Room.findOne({ _id: req.params.roomId, members: req.userId });
+  if (!room) {
+    return res.status(403).json({ message: "You are not a member of this room" });
+  }
+
+  const note = await Note.findOne({ room: room._id });
+  if (!note || !note.content.trim()) {
+    return res.status(400).json({ message: "Write some notes first" });
+  }
+
+  try {
+    console.log("NOTE CONTENT:", note.content);
+    const summary = await askGemini(
+      `Summarize these study notes in 5 short bullet points:\n\n${note.content}`
+    );
+    res.json({ summary });
+  } catch (err) {
+    res.status(503).json({ message: "AI is busy, try again in a moment" });
+  }
 });
 
 app.post("/api/auth/register", async (req, res) => {
