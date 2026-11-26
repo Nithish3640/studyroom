@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { socket } from "./socket.js";
 
 export default function App() {
     const [rooms, setRooms] = useState([]);
@@ -23,6 +24,18 @@ export default function App() {
             if (Array.isArray(data)) setRooms(data);
         });
     }, []);
+
+    useEffecr(() => {
+        function onTaskCreated(task) {
+            if (task.room !== selectedRoom) return;
+            setTasks((prev) => 
+                prev.some((t) => t._id === task._id) ? prev: [...prev, task]
+        );
+
+        socket.on("task:created", onTaskCreated);
+        return () => socket/off("task:created", onTaskCreated);
+        }
+    }, [selectedRoom]);
 
     function addRoom() {
         const token = localStorage.getItem("token");
@@ -89,6 +102,7 @@ export default function App() {
 
     function openRoom(room) {
         setSelectedRoom(room);
+        socket.emit("join-room", room._id);
         const token = localStorage.getItem("token");
 
         fetch(`http://localhost:5000/api/rooms/${room._id}/tasks`, {

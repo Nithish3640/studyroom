@@ -23,6 +23,10 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
+  socket.on("join-room", (roomId) => {
+    socket.join(roomId);
+    console.log(socket.id, "joined room", roomId);
+  });
   socket.on("disconnect", () => console.log("A user left:", socket.id));
 })
 
@@ -82,6 +86,8 @@ app.post("/api/rooms/:roomId/tasks", protect, async (req, res) => {
     title: req.body.title,
     createdBy: req.userId,
   });
+  
+  io.to(req.params.roomId).emit("task:created", task); 
 
   res.status(201).json(task);
 });
@@ -165,7 +171,7 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB connected");
-    app.listen(5000, () => {
+    server.listen(5000, () => {
       console.log("Server is running on port 5000");  
     });
   })
