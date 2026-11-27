@@ -1,6 +1,21 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { socket } from "../socket.js";
+import { LogOut } from "lucide-react";
+
+function Logo() {
+    return (
+      <div className="flex items-center gap-2.5 text-[#2b1237]">
+        <div className="relative flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#f472b6] text-white shadow-[0_7px_18px_rgba(124,58,237,0.24)]">
+          <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <path d="M4.5 5.5A2.5 2.5 0 0 1 7 3h5v15H7a2.5 2.5 0 0 0-2.5 2.5v-15Z" />
+            <path d="M19.5 5.5A2.5 2.5 0 0 0 17 3h-5v15h5a2.5 2.5 0 0 1 2.5 2.5v-15Z" />
+          </svg>
+        </div>
+        <span className="text-[21px] font-bold tracking-[-0.04em]">StudyRoom</span>
+      </div>
+    );
+  }
 
 export default function Rooms() {
     const navigate = useNavigate();
@@ -217,6 +232,101 @@ export default function Rooms() {
     }
 
     return (
+        <div className="flex h-screen flex-col bg-[#f1eef8] text-[#1a1023]">
+          {/* top bar */}
+          <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#e4dff0] bg-white px-6">
+            <span className="text-xl font-bold"><logo />StudyRoom</span>
+            <button onClick={logout} className="flex items-center gap-2 text-sm font-semibold text-[#786f7c] hover:text-[#7c3aed]">
+              <LogOut size={16} /> Logout
+            </button>
+          </header>
+      
+          <div className="flex min-h-0 flex-1">
+            {/* sidebar */}
+            <aside className="w-72 shrink-0 overflow-y-auto border-r border-[#e4dff0] bg-[#faf8ff] p-4">
+            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#7c3aed]">My rooms</p>
+
+            <div className="space-y-1">
+            {rooms.map((room) => {
+                const active = selectedRoom?._id === room._id;
+                return (
+                <button
+                    key={room._id}
+                    onClick={() => openRoom(room)}
+                    className={`w-full rounded-xl px-3 py-2.5 text-left transition ${
+                    active
+                        ? "bg-gradient-to-r from-[#7c3aed] to-[#f472b6] text-white shadow-md"
+                        : "hover:bg-[#f1eaff]"
+                    }`}
+                >
+                    <p className="text-sm font-semibold">{room.name}</p>
+                    <p className={`text-xs ${active ? "text-white/80" : "text-[#9a8fa3]"}`}>Code: {room.joinCode}</p>
+                </button>
+                );
+            })}
+            </div>
+
+            <div className="mt-6 space-y-2 border-t border-[#e4dff0] pt-4">
+            <input
+                placeholder="New room name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full rounded-xl border border-[#e4dff0] bg-white px-3 py-2 text-sm outline-none focus:border-[#7c3aed] focus:ring-4 focus:ring-[#7c3aed]/15"
+            />
+            <button onClick={addRoom} className="w-full rounded-full bg-[#7c3aed] py-2 text-sm font-semibold text-white transition hover:bg-[#6d28d9]">
+                Add room
+            </button>
+            </div>
+
+            <div className="mt-4 space-y-2">
+            <input
+                placeholder="Join code"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value)}
+                className="w-full rounded-xl border border-[#e4dff0] bg-white px-3 py-2 text-sm outline-none focus:border-[#7c3aed] focus:ring-4 focus:ring-[#7c3aed]/15"
+            />
+            <button onClick={joinRoom} className="w-full rounded-full border border-[#7c3aed] py-2 text-sm font-semibold text-[#7c3aed] transition hover:bg-[#f1eaff]">
+                Join room
+            </button>
+            </div>
+            </aside>
+      
+            {/* main */}
+            <main className="flex-1 overflow-y-auto p-6">
+            {selectedRoom && (
+                <div>
+                <h3>Tasks in {selectedRoom.name}</h3>
+                <input placeholder="New task" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} />
+                <button onClick={addTask}>Add Task</button>
+                {tasks.map((task) => (
+                    <p key={task._id}>
+                    {task.title} ({task.status}){" "}
+                    <button onClick={() => changeStatus(task, "todo")}>Todo</button>
+                    <button onClick={() => changeStatus(task, "doing")}>Doing</button>
+                    <button onClick={() => changeStatus(task, "done")}>Done</button>
+                    </p>
+                ))}
+                <h3>Shared Notes</h3>
+                <textarea rows={8} cols={50} value={noteContent} onChange={(e) => setNoteContent(e.target.value)} />
+                <br />
+                <button onClick={saveNote}>Save Note</button>
+                <button onClick={summarize} disabled={loading}>
+                    {loading ? "Summarizing..." : "Summarize with AI"}
+                </button>
+                {summary && (
+                    <div>
+                    <h4>AI Summary</h4>
+                    <p style={{ whiteSpace: "pre-wrap" }}>{summary}</p>
+                    </div>
+                )}
+                </div>
+            )}
+            </main>
+          </div>
+        </div>
+      );
+
+    /* return (
         <div>
             <button onClick={logout}>Logout</button>
 
@@ -269,5 +379,5 @@ export default function Rooms() {
                 </div>
             )}
         </div>
-    )
+    ) */
 }

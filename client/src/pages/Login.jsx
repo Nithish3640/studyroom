@@ -125,6 +125,12 @@ export default function Login({ register = false }) {
 
   function submit(e) {
     e.preventDefault();
+    
+    if (isRegister && password.length < 6) {
+        alert("Password must be at least 6 characters");
+        return;
+      }
+
     fetch(`http://localhost:5000/api/auth/${isRegister ? "register" : "login"}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
