@@ -3,20 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { socket } from "../socket.js";
 import { LogOut } from "lucide-react";
 
-function Logo() {
-    return (
-      <div className="flex items-center gap-2.5 text-[#2b1237]">
-        <div className="relative flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#f472b6] text-white shadow-[0_7px_18px_rgba(124,58,237,0.24)]">
-          <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M4.5 5.5A2.5 2.5 0 0 1 7 3h5v15H7a2.5 2.5 0 0 0-2.5 2.5v-15Z" />
-            <path d="M19.5 5.5A2.5 2.5 0 0 0 17 3h-5v15h5a2.5 2.5 0 0 1 2.5 2.5v-15Z" />
-          </svg>
-        </div>
-        <span className="text-[21px] font-bold tracking-[-0.04em]">StudyRoom</span>
-      </div>
-    );
-  }
-
 export default function Rooms() {
     const navigate = useNavigate();
 
@@ -56,7 +42,7 @@ export default function Rooms() {
         );
 
         socket.on("task:created", onTaskCreated);
-        return () => socket/off("task:created", onTaskCreated);
+        return () => socket.off("task:created", onTaskCreated);
         }
     }, [selectedRoom]);
 
@@ -66,7 +52,7 @@ export default function Rooms() {
         }
 
         socket.on("task:updated", onTaskUpdated);
-        return () => socket.off("task.updated", onTaskUpdated);
+        return () => socket.off("task:updated", onTaskUpdated);
     }, []);
 
     useEffect(() => {
@@ -235,7 +221,7 @@ export default function Rooms() {
         <div className="flex h-screen flex-col bg-[#f1eef8] text-[#1a1023]">
           {/* top bar */}
           <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#e4dff0] bg-white px-6">
-            <span className="text-xl font-bold"><logo />StudyRoom</span>
+            <span className="text-xl font-bold">StudyRoom</span>
             <button onClick={logout} className="flex items-center gap-2 text-sm font-semibold text-[#786f7c] hover:text-[#7c3aed]">
               <LogOut size={16} /> Logout
             </button>
@@ -295,7 +281,12 @@ export default function Rooms() {
             <main className="flex-1 overflow-y-auto p-6">
             {selectedRoom && (
                 <div>
-                <h3>Tasks in {selectedRoom.name}</h3>
+                <header className="mb-6 rounded-2xl border border-violet-100 bg-white p-5">
+                    <h1 className="text2xl font-bold">{selectedRoom.name}</h1>
+                    <p>
+                        Join code <span className="font-mono">{selectedRoom.joinCode}</span>
+                    </p>
+                </header>
                 <input placeholder="New task" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} />
                 <button onClick={addTask}>Add Task</button>
                 {tasks.map((task) => (
