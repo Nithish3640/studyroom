@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { setToken } from "../auth.js";
 
 function Logo() {
   return (
@@ -121,6 +122,8 @@ export default function Login({ register = false }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
+
   const navigate = useNavigate();
 
   function submit(e) {
@@ -141,7 +144,7 @@ export default function Login({ register = false }) {
         if (isRegister && data._id) {
           navigate("/login");
         } else if (data.token) {
-          localStorage.setItem("token", data.token);
+          setToken(data.token, remember);
           navigate("/");
         } else {
           alert(data.message || "Something went wrong");
@@ -206,7 +209,7 @@ export default function Login({ register = false }) {
 
               <div className="flex items-center justify-between gap-4 text-[13px]">
                 <label className="flex cursor-pointer items-center gap-2.5 text-[#665c69]">
-                  <input type="checkbox" className="size-4 accent-[#7c3aed]" />
+                  <input type="checkbox" checked={remember} className="size-4 accent-[#7c3aed]" />
                   Remember me
                 </label>
                 {!isRegister && (

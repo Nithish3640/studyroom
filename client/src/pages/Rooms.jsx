@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { socket } from "../socket.js";
 import { LogOut } from "lucide-react";
+import { getToken, clearToken } from "../auth.js";
 
 export default function Rooms() {
     const navigate = useNavigate();
@@ -18,11 +19,11 @@ export default function Rooms() {
     const [generating, setGenerating] = useState(false);
 
     useEffect(() => {
-        if (!localStorage.getItem("token")) navigate("/login");
+        if (!getToken()) navigate("/login");
     }, []); 
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
+        const token = getToken();
 
         fetch("http://localhost:5000/api/rooms",
             {
@@ -67,7 +68,7 @@ export default function Rooms() {
     }, [selectedRoom]);
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
+        const token = getToken();
         if (!token) return;
 
         socket.auth = { token };
@@ -77,12 +78,12 @@ export default function Rooms() {
     }, [])
 
     function logout() {
-        localStorage.removeItem("token");
+        clearToken();
         navigate("/login");
       }
 
     function addRoom() {
-        const token = localStorage.getItem("token");
+        const token = getToken();
 
         fetch("http://localhost:5000/api/rooms", {
             method: "POST",
@@ -104,7 +105,7 @@ export default function Rooms() {
     }
 
     function joinRoom() {
-        const token = localStorage.getItem("token");
+        const token = getToken();
 
         fetch("http://localhost:5000/api/rooms/join", {
             method: "POST",
@@ -130,7 +131,7 @@ export default function Rooms() {
     function openRoom(room) {
         setSelectedRoom(room);
         socket.emit("join-room", room._id);
-        const token = localStorage.getItem("token");
+        const token = getToken();
 
         fetch(`http://localhost:5000/api/rooms/${room._id}/tasks`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -148,7 +149,7 @@ export default function Rooms() {
     }
 
     function addTask() {
-        const token = localStorage.getItem("token");
+        const token = getToken();
       
         fetch(`http://localhost:5000/api/rooms/${selectedRoom._id}/tasks`, {
           method: "POST",
@@ -170,7 +171,7 @@ export default function Rooms() {
     }
 
     function changeStatus(task, newStatus) {
-        const token = localStorage.getItem("token");
+        const token = getToken();
       
         fetch(`http://localhost:5000/api/tasks/${task._id}`, {
           method: "PATCH",
@@ -191,7 +192,7 @@ export default function Rooms() {
     }
 
     function saveNote() {
-        const token = localStorage.getItem("token");
+        const token = getToken();
       
         fetch(`http://localhost:5000/api/rooms/${selectedRoom._id}/note`, {
           method: "PUT",
@@ -209,7 +210,7 @@ export default function Rooms() {
 
     function summarize() {
         console.log("Summarize clicked")
-        const token = localStorage.getItem("token");
+        const token = getToken();
         setLoading(true);
         setSummary("");
 
@@ -229,7 +230,7 @@ export default function Rooms() {
     }
 
     function generateTasks() {
-        const token = localStorage.getItem("token");
+        const token = getToken();
         setGenerating(true);
       
         fetch(`http://localhost:5000/api/rooms/${selectedRoom._id}/generate-tasks`, {
