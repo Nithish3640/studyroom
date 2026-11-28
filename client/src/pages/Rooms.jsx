@@ -66,6 +66,16 @@ export default function Rooms() {
         return () => socket.off("note:updated", onNoteUpdated);
     }, [selectedRoom]);
 
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        socket.auth = { token };
+        socket.connect();
+        
+        return () => socket.disconnect();
+    }, [])
+
     function logout() {
         localStorage.removeItem("token");
         navigate("/login");

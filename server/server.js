@@ -23,11 +23,26 @@ const io = new Server(server, {
   cors: { origin: "http://localhost:5173" }
 });
 
+io.use((socket, next) => {
+  try {
+    const decoded = jwt.verify(socket.handshake.auth.token, process.env.JWT_SECRET);
+    socket.userId = decoded.id;
+    next();
+  } catch(err) {
+    next(new Error("Not authorized"));
+  }
+})
+
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
-  socket.on("join-room", (roomId) => {
-    socket.join(roomId);
-    console.log(socket.id, "joined room", roomId);
+  socket.on("join-room", async (roomId) => {
+    try {
+      const room = await Room.findOne({ _id: roomId, members: socket.userId });
+      if (!room) return;
+      socket.join(roomId);
+      } catch(err) {
+        console.log("join-room failed:", err.message);
+    }
   });
   socket.on("disconnect", () => console.log("A user left:", socket.id));
 })
