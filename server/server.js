@@ -4,7 +4,6 @@ import mongoose from "mongoose";
 import express from "express";
 import "dotenv/config";
 import cors from "cors";
-import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { protect } from "./middleware/auth.js";
 import Room from "./models/Room.js";
@@ -12,11 +11,13 @@ import Task from "./models/Task.js";
 import Note from "./models/Note.js";
 import { askGemini } from "./services/gemini.js";
 import authRoutes from "./routes/auth.js";
+import roomRoutes from "./routes/rooms.js";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRoutes);
+app.use("/api/rooms", roomRoutes);
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -49,42 +50,6 @@ io.on("connection", (socket) => {
 
 app.get("/home", (req, res) => {
   res.send("Hello from my first server");
-});
-
-app.get("/api/rooms", protect, async (req, res) => {
-  const rooms = await Room.find({ members: req.userId });
-  res.json(rooms);
-});
-
-app.post("/api/rooms", protect, async (req, res) => {
-  const joinCode = crypto.randomBytes(3).toString("hex").toUpperCase();
-  const newRoom = await Room.create({ 
-    name: req.body.name, 
-    joinCode,
-    owner: req.userId,
-    members: [req.userId],
-  });
-  res.status(201).json(newRoom);
-});
-
-app.post("/api/rooms/join", protect, async (req, res) => {
-  const joinCode = req.body.joinCode?.toUpperCase();
-
-  if (!joinCode) {
-    return res.status(400).json({ message: "Join code is required" });
-  }
-
-  const room = await Room.findOneAndUpdate(
-    { joinCode },
-    { $addToSet: { members: req.userId } },
-    { new: true }
-  );
-
-  if (!room) {
-    return res.status(404).json({ message: "No room with that code"});
-  }
-
-  res.json(room);
 });
 
 app.post("/api/rooms/:roomId/tasks", protect, async (req, res) => {

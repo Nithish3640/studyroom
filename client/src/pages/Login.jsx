@@ -210,7 +210,7 @@ export default function Login({ register = false }) {
 
               <div className="flex items-center justify-between gap-4 text-[13px]">
                 <label className="flex cursor-pointer items-center gap-2.5 text-[#665c69]">
-                  <input type="checkbox" checked={remember} className="size-4 accent-[#7c3aed]" />
+                  <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="size-4 accent-[#7c3aed]" />
                   Remember me
                 </label>
                 {!isRegister && (
