@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { socket } from "../socket.js";
 import { LogOut } from "lucide-react";
 import { getToken, clearToken } from "../auth.js";
+import { API } from "../config.js";  
 
 export default function Rooms() {
     const navigate = useNavigate();
@@ -25,7 +26,7 @@ export default function Rooms() {
     useEffect(() => {
         const token = getToken();
 
-        fetch("http://localhost:5000/api/rooms",
+        fetch(`${API}/api/rooms`,
             {
                 headers: { Authorization: `Bearer ${token}`},
             }
@@ -85,7 +86,7 @@ export default function Rooms() {
     function addRoom() {
         const token = getToken();
 
-        fetch("http://localhost:5000/api/rooms", {
+        fetch(`${API}/api/rooms`, {
             method: "POST",
             headers: { 
                 "Content-Type": "application/json",
@@ -107,7 +108,7 @@ export default function Rooms() {
     function joinRoom() {
         const token = getToken();
 
-        fetch("http://localhost:5000/api/rooms/join", {
+        fetch(`${API}/api/rooms/join`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -133,7 +134,7 @@ export default function Rooms() {
         socket.emit("join-room", room._id);
         const token = getToken();
 
-        fetch(`http://localhost:5000/api/rooms/${room._id}/tasks`, {
+        fetch(`${API}/api/rooms/${room._id}/tasks`, {
             headers: { Authorization: `Bearer ${token}` },
         })
             .then((res) => res.json())
@@ -141,7 +142,7 @@ export default function Rooms() {
                 if (Array.isArray(data)) setTasks(data);
             });
 
-        fetch(`http://localhost:5000/api/rooms/${room._id}/note`, {
+        fetch(`${API}/api/rooms/${room._id}/note`, {
             headers: { Authorization: `Bearer ${token}` },
             })
             .then((res) => res.json())
@@ -151,7 +152,7 @@ export default function Rooms() {
     function addTask() {
         const token = getToken();
       
-        fetch(`http://localhost:5000/api/rooms/${selectedRoom._id}/tasks`, {
+        fetch(`${API}/api/rooms/${selectedRoom._id}/tasks`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -173,7 +174,7 @@ export default function Rooms() {
     function changeStatus(task, newStatus) {
         const token = getToken();
       
-        fetch(`http://localhost:5000/api/tasks/${task._id}`, {
+        fetch(`${API}/api/tasks/${task._id}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -194,7 +195,7 @@ export default function Rooms() {
     function saveNote() {
         const token = getToken();
       
-        fetch(`http://localhost:5000/api/rooms/${selectedRoom._id}/note`, {
+        fetch(`${API}/api/rooms/${selectedRoom._id}/note`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -214,7 +215,7 @@ export default function Rooms() {
         setLoading(true);
         setSummary("");
 
-        fetch(`http://localhost:5000/api/rooms/${selectedRoom._id}/summarize`, {
+        fetch(`${API}/api/rooms/${selectedRoom._id}/summarize`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
         })
@@ -233,7 +234,7 @@ export default function Rooms() {
         const token = getToken();
         setGenerating(true);
       
-        fetch(`http://localhost:5000/api/rooms/${selectedRoom._id}/generate-tasks`, {
+        fetch(`${API}/api/rooms/${selectedRoom._id}/generate-tasks`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         })

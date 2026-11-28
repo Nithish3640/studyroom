@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { setToken } from "../auth.js";
+import { API } from "../config.js";
 
 function Logo() {
   return (
@@ -134,7 +135,7 @@ export default function Login({ register = false }) {
         return;
       }
 
-    fetch(`http://localhost:5000/api/auth/${isRegister ? "register" : "login"}`, {
+    fetch(`${API}/api/auth/${isRegister ? "register" : "login"}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(isRegister ? { name, email, password } : { email, password }),
