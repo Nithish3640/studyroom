@@ -15,6 +15,7 @@ export default function Rooms() {
     const [noteContent, setNoteContent] = useState("");
     const [loading, setLoading] = useState(false);
     const [summary, setSummary] = useState("");
+    const [generating, setGenerating] = useState(false);
 
     useEffect(() => {
         if (!localStorage.getItem("token")) navigate("/login");
@@ -217,6 +218,27 @@ export default function Rooms() {
             .finally(() => setLoading(false));
     }
 
+    function generateTasks() {
+        const token = localStorage.getItem("token");
+        setGenerating(true);
+      
+        fetch(`http://localhost:5000/api/rooms/${selectedRoom._id}/generate-tasks`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (!Array.isArray(data)) alert(data.message || "Could not generate tasks");
+          })
+          .finally(() => setGenerating(false));
+      }
+
+    const taskColumns = [
+        { status: "todo", label: "Todo" },
+        { status: "doing", label: "Doing" },
+        { status: "done", label: "Done" },
+      ];
+
     return (
         <div className="flex h-screen flex-col bg-[#f1eef8] text-[#1a1023]">
           {/* top bar */}
@@ -279,96 +301,124 @@ export default function Rooms() {
       
             {/* main */}
             <main className="flex-1 overflow-y-auto p-6">
-            {selectedRoom && (
+            {!selectedRoom ? (
+                <div className="flex h-full items-center justify-center text-[#9a8fa3]">
+                Select or create a room to get started
+                </div>
+            ) : (
                 <div>
-                <header className="mb-6 rounded-2xl border border-violet-100 bg-white p-5">
-                    <h1 className="text2xl font-bold">{selectedRoom.name}</h1>
-                    <p>
-                        Join code <span className="font-mono">{selectedRoom.joinCode}</span>
-                    </p>
-                </header>
-                <input placeholder="New task" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} />
-                <button onClick={addTask}>Add Task</button>
-                {tasks.map((task) => (
-                    <p key={task._id}>
-                    {task.title} ({task.status}){" "}
-                    <button onClick={() => changeStatus(task, "todo")}>Todo</button>
-                    <button onClick={() => changeStatus(task, "doing")}>Doing</button>
-                    <button onClick={() => changeStatus(task, "done")}>Done</button>
-                    </p>
-                ))}
-                <h3>Shared Notes</h3>
-                <textarea rows={8} cols={50} value={noteContent} onChange={(e) => setNoteContent(e.target.value)} />
-                <br />
-                <button onClick={saveNote}>Save Note</button>
-                <button onClick={summarize} disabled={loading}>
-                    {loading ? "Summarizing..." : "Summarize with AI"}
-                </button>
-                {summary && (
+                <div className="mb-6 flex items-center justify-between">
                     <div>
-                    <h4>AI Summary</h4>
-                    <p style={{ whiteSpace: "pre-wrap" }}>{summary}</p>
+                    <h2 className="text-3xl font-bold tracking-tight">{selectedRoom.name}</h2>
+                    <p className="mt-1 text-sm text-[#786f7c]">
+                        Join code: <span className="font-semibold text-[#7c3aed]">{selectedRoom.joinCode}</span>
+                    </p>
                     </div>
-                )}
+                    <span className="flex items-center gap-1.5 rounded-full bg-[#f3e8ff] px-3 py-1 text-xs font-bold text-[#7c3aed]">
+                    <span className="size-1.5 rounded-full bg-[#c026d3]" /> Live
+                    </span>
+                </div>
+
+                {/* add task */}
+                <div className="mb-6 flex gap-2">
+                <input
+                    placeholder="Add a new task..."
+                    value={taskTitle}
+                    onChange={(e) => setTaskTitle(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addTask()}
+                    className="h-11 flex-1 rounded-xl border border-[#e4dff0] bg-white px-4 text-sm outline-none focus:border-[#7c3aed] focus:ring-4 focus:ring-[#7c3aed]/15"
+                />
+                <button
+                    onClick={addTask}
+                    className="rounded-full bg-gradient-to-r from-[#7c3aed] to-[#f472b6] px-6 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 active:translate-y-0"
+                >
+                    Add task
+                </button>
+                </div>
+
+                {/* columns */}
+                <div className="grid gap-4 md:grid-cols-3">
+                {[
+                    ["todo", "To do"],
+                    ["doing", "Doing"],
+                    ["done", "Done"],
+                ].map(([status, label]) => (
+                    <div key={status} className="rounded-2xl border border-[#e4dff0] bg-white p-4">
+                    <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#918796]">
+                        {label} ({tasks.filter((t) => t.status === status).length})
+                    </p>
+
+                    <div className="space-y-2">
+                        {tasks
+                        .filter((t) => t.status === status)
+                        .map((task) => (
+                            <div key={task._id} className="rounded-xl border border-[#eee9e3] bg-[#faf8ff] p-3">
+                            <p className="text-sm font-semibold">{task.title}</p>
+                            <div className="mt-2 flex gap-1">
+                                {["todo", "doing", "done"]
+                                .filter((s) => s !== status)
+                                .map((s) => (
+                                    <button
+                                    key={s}
+                                    onClick={() => changeStatus(task, s)}
+                                    className="rounded-md bg-[#f3e8ff] px-2 py-0.5 text-[10px] font-bold text-[#7c3aed] transition hover:bg-[#e9d5ff]"
+                                    >
+                                    → {s}
+                                    </button>
+                                ))}
+                            </div>
+                            </div>
+                        ))}
+                    </div>
+                    </div>
+                ))}
+                </div>
+                <div className="mt-6 rounded-2xl border border-[#e4dff0] bg-white p-5">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-xs font-bold uppercase tracking-widest text-[#918796]">Shared notes</p>
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                onClick={saveNote}
+                                className="rounded-full border border-[#7c3aed] px-4 py-1.5 text-xs font-bold text-[#7c3aed] transition hover:bg-[#f1eaff]"
+                            >
+                                Save note
+                            </button>
+                            <button
+                                onClick={summarize}
+                                disabled={loading}
+                                className="rounded-full bg-gradient-to-r from-[#7c3aed] to-[#f472b6] px-4 py-1.5 text-xs font-bold text-white shadow-md transition hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0"
+                            >
+                                {loading ? "Summarizing..." : "✨ Summarize"}
+                            </button>
+                            <button
+                                onClick={generateTasks}
+                                disabled={generating}
+                                className="rounded-full bg-gradient-to-r from-[#7c3aed] to-[#f472b6] px-4 py-1.5 text-xs font-bold text-white shadow-md transition hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0"
+                            >
+                                {generating ? "Generating..." : "✨ Generate tasks"}
+                            </button>
+                        </div>
+                    </div>
+
+                    <textarea
+                        rows={8}
+                        placeholder="Write shared notes here, then click Save note..."
+                        value={noteContent}
+                        onChange={(e) => setNoteContent(e.target.value)}
+                        className="w-full resize-none rounded-xl border border-[#e4dff0] bg-[#faf8ff] p-4 text-sm outline-none focus:border-[#7c3aed] focus:ring-4 focus:ring-[#7c3aed]/15"
+                    />
+
+                    {summary && (
+                        <div className="mt-4 rounded-xl bg-[#f3e8ff] p-4">
+                        <p className="mb-1 text-xs font-bold uppercase tracking-widest text-[#7c3aed]">AI summary</p>
+                        <p className="whitespace-pre-wrap text-sm">{summary}</p>
+                        </div>
+                    )}
+                    </div>
                 </div>
             )}
             </main>
           </div>
         </div>
       );
-
-    /* return (
-        <div>
-            <button onClick={logout}>Logout</button>
-
-            <h1>Study Rooms</h1>
-            {rooms.map((room) => 
-                <p key={room._id} onClick={() => openRoom(room)} style={{ cursor: "pointer"}}>
-                    {room.name} (Code: {room.joinCode})
-                </p>            
-            )}
-            <input value={name} onChange={(e) => setName(e.target.value)} />
-            <button onClick={addRoom}>Add Room</button>
-            <h3>Join a room</h3>
-            <input placeholder="Join code" value={joinCode} onChange={(e) => setJoinCode(e.target.value)} />
-            <button onClick={joinRoom}>Join</button>
-            {selectedRoom && (
-                <div>
-                    <h3>Tasks in {selectedRoom.name}</h3>
-                    <input
-                        placeholder="New task"
-                        value={taskTitle}
-                        onChange={(e) => setTaskTitle(e.target.value)}
-                    />
-                    <button onClick={addTask}>Add Task</button>
-                    {tasks.map((task) => (
-                        <p key={task._id}>
-                            {task.title} ({task.status}){" "}
-                            <button onClick={() => changeStatus(task, "todo")}>Todo</button>
-                            <button onClick={() => changeStatus(task, "doing")}>Doing</button>
-                            <button onClick={() => changeStatus(task, "done")}>Done</button>
-                        </p>
-                    ))}
-                    <h3>Shared Notes</h3>
-                    <textarea
-                    rows={8}
-                    cols={50}
-                    value={noteContent}
-                    onChange={(e) => setNoteContent(e.target.value)}
-                    />
-                    <br />
-                    <button onClick={saveNote}>Save Note</button>
-                    <button onClick={summarize} disabled={loading}>
-                        {loading ? "Summarizing..." : "Summarize with AI" }
-                    </button>
-                    {summary && (
-                        <div>
-                            <h4>AI Summary</h4>
-                            <p style={{ whiteSpace: "pre-wrap"}}>{summary}</p>
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
-    ) */
 }
